@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0, 0%, 0%; /* Black (HSL values for background) */
+  --foreground: 120, 100%, 50%; /* Green (HSL values for foreground) */
+}
+
+body {
+  --background: #0f172a;
+  --foreground: #94a3b8;
+}
