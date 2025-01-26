@@ -1,8 +1,8 @@
 // app/layout.tsx
 import { ReactNode } from "react";
-import { Header } from "./components/layout/Header";
+import { Header } from "./components/Header";
 import { Metadata } from "next";
-import RainbowKit from "./components/layout/RainbowKit";
+import RainbowKit from "./components/RainbowKit";
 import "./globals.css";
 interface LayoutProps {
   children: ReactNode;

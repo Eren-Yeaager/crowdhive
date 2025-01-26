@@ -1,4 +1,17 @@
+"use client";
+import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 export default function LandingPage() {
+  const { isConnected } = useAccount();
+  const router = useRouter();
+  const handleStartCampaign = () => {
+    if (isConnected) {
+      router.push("/create-campaign");
+    } else {
+      alert("Please connect you metamask wallet");
+    }
+  };
+
   return (
     <div>
       <section className=" text-white h-screen flex items-center justify-center text-center px-4">
@@ -12,7 +25,10 @@ export default function LandingPage() {
             transparency, security, and speed.
           </p>
           <div className="mt-8 space-y-4 md:space-y-0 md:space-x-4 flex flex-col md:flex-row justify-center">
-            <button className="bg-green-600 text-white px-6 py-3 rounded-md text-lg hover:bg-green-500 transition">
+            <button
+              className="bg-green-600 text-white px-6 py-3 rounded-md text-lg hover:bg-green-500 transition"
+              onClick={handleStartCampaign}
+            >
               Start Your Campaign
             </button>
             <button className="bg-gray-800 text-white px-6 py-3 rounded-md text-lg hover:bg-gray-700 transition">
