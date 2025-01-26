@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+const { ethers } = require("ethers");
 export function Header() {
   return (
     <header>
@@ -9,7 +11,7 @@ export function Header() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="hidden md:flex space-x-6 text-lg text-gray-400">
+        <nav className="hidden md:flex space-x-6 text-lg  text-gray-400">
           <a href="/" className="hover:text-green-400 transition">
             Home
           </a>
@@ -25,9 +27,7 @@ export function Header() {
         </nav>
 
         {/* Connect Wallet Button */}
-        <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-500 transition">
-          Connect Wallet
-        </button>
+        <ConnectButton />
       </div>
     </header>
   );
