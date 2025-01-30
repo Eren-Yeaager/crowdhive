@@ -31,7 +31,13 @@ contract CrowdFunding{
         });
     }
 
-    function contribute (uint _id)external payable{
-        
+    function contribute (uint _id ) external payable{
+      Campaign storage campaign= campaigns[_id];
+      require(block.timestamp < campaign.deadline ,"Campaign has eneded");
+      require(msg.value > 0 ,"Contribution must be valid");
+      campaign.amountCollected += msg.value ;
+      contributons[_id][msg.sender]+= msg.value ;
+
+       emit ContributionReceived(_id, msg.sender, msg.value);
     }
 }
