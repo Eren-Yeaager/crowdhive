@@ -10,6 +10,8 @@ contract CrowdFunding{
         uint amountCollected;
         bool withdrawn;
     }
+    event ContributionReceived(uint id, address indexed contributor, uint amount);
+
     mapping(uint=>Campaign)public campaigns;
     mapping(uint=>mapping(address=>uint)) public contributons;
     uint public campaignCount;
@@ -38,6 +40,8 @@ contract CrowdFunding{
       campaign.amountCollected += msg.value ;
       contributons[_id][msg.sender]+= msg.value ;
 
-       emit ContributionReceived(_id, msg.sender, msg.value);
+      emit ContributionReceived(_id, msg.sender, msg.value);
     }
+
+    
 }
