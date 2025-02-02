@@ -31,6 +31,7 @@ contract CrowdFunding{
             amountCollected : 0 ,
             withdrawn :false 
         });
+        campaignCount++ ; 
     }
 
     function contribute (uint _id ) external payable{
@@ -52,5 +53,32 @@ contract CrowdFunding{
     (bool success, ) = payable(campaign.creator).call{value: amount}("");
     require(success, "Transfer failed");
 }
+
+    function getCampaign(uint _id) external view returns (
+        address creator,
+        string memory title,
+        string memory description,
+        uint goal,
+        uint deadline,
+        uint amountCollected,
+        bool withdrawn
+    ) {
+        Campaign storage campaign = campaigns[_id];
+        return (
+            campaign.creator,
+            campaign.title,
+            campaign.description,
+            campaign.goal,
+            campaign.deadline,
+            campaign.amountCollected,
+            campaign.withdrawn
+        );
+    }
+
+    
+    function getCampaignCount() external view returns (uint) {
+        return campaignCount;
+    }
+
 
 }

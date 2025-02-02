@@ -135,4 +135,39 @@ describe("CrowdFunding Contract", function () {
       ).to.be.revertedWith("No funds available");
     });
   });
+
+  describe("getCampaign", function () {
+    it("should return the correct campaign details", async function () {
+      const title = "Test Campaign";
+      const description = "This campaign is for testing";
+      const goal = ethers.parseEther("10");
+      const duration = 3600; // 1 hour
+      await crowdfunding.createCampaign(title, description, goal, duration);
+
+      const campaign = await crowdfunding.getCampaign(0);
+      expect(campaign.title).to.equal(title);
+      expect(campaign.description).to.equal(description);
+      expect(campaign.goal).to.equal(goal);
+    });
+  });
+
+  describe("getCampaignCount", function () {
+    it("should return the correct campaign count", async function () {
+      await crowdfunding.createCampaign(
+        "Campaign 1",
+        "Desc 1",
+        ethers.parseEther("10"),
+        3600
+      );
+      await crowdfunding.createCampaign(
+        "Campaign 2",
+        "Desc 2",
+        ethers.parseEther("20"),
+        3600
+      );
+
+      const count = await crowdfunding.getCampaignCount();
+      expect(count).to.equal(2);
+    });
+  });
 });
