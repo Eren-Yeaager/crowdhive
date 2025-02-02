@@ -3,7 +3,14 @@ import "@rainbow-me/rainbowkit/styles.css";
 import React, { ReactNode } from "react";
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
-import { mainnet, polygon, optimism, arbitrum, base } from "wagmi/chains";
+import {
+  mainnet,
+  polygon,
+  optimism,
+  arbitrum,
+  base,
+  sepolia,
+} from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 interface RainbowKitProps {
   children: ReactNode;
@@ -13,7 +20,7 @@ const queryClient = new QueryClient();
 const config = getDefaultConfig({
   appName: "CrowdHive",
   projectId: projectId,
-  chains: [mainnet, polygon, optimism, arbitrum, base],
+  chains: [mainnet, polygon, optimism, arbitrum, base, sepolia],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 export default function RainbowKit({ children }: RainbowKitProps) {
