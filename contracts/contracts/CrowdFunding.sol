@@ -43,5 +43,14 @@ contract CrowdFunding{
       emit ContributionReceived(_id, msg.sender, msg.value);
     }
 
-    
+    function withdrawFunds(uint _id) external {
+    Campaign storage campaign = campaigns[_id];
+    require(msg.sender == campaign.creator, "Only creator can withdraw");
+    require(campaign.amountCollected > 0, "No funds available");
+    uint amount = campaign.amountCollected;
+    campaign.amountCollected = 0; 
+    (bool success, ) = payable(campaign.creator).call{value: amount}("");
+    require(success, "Transfer failed");
+}
+
 }
