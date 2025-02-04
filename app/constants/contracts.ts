@@ -230,7 +230,7 @@ export const CONTRACT_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
-];
+] as const;
 
 export const getContract = (
   providerOrSigner: ethers.Signer | ethers.Provider

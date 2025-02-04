@@ -18,17 +18,11 @@ export default function CreateCampaign() {
     const description = formData.get("description") as string;
     const duration = formData.get("duration") as string;
 
-    // Calling the contract's createCampaign function
     writeContract({
       address: CONTRACT_ADDRESS,
       abi: CONTRACT_ABI,
       functionName: "createCampaign",
-      args: [
-        title,
-        description,
-        ethers.parseEther(goal), // Parse the goal as ethers for ETH handling
-        parseInt(duration), // Parse duration to integer
-      ],
+      args: [title, description, ethers.parseEther(goal), BigInt(duration)],
     });
   }
 
