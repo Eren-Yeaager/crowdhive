@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
-contract CrowdFunding{
+contract CrowdHive{
     struct Campaign{
         address creator;
         string title;
@@ -79,6 +79,25 @@ contract CrowdFunding{
     function getCampaignCount() external view returns (uint) {
         return campaignCount;
     }
+   function getCampaignsByCreator(address _creator) external view returns (uint[] memory) {
+    uint count = 0;
+    for (uint i = 0; i < campaignCount; i++) {
+        if (campaigns[i].creator == _creator) {
+            count++;
+        }
+    }
+
+    uint[] memory userCampaigns = new uint[](count);
+    uint index = 0;
+    for (uint i = 0; i < campaignCount; i++) {
+        if (campaigns[i].creator == _creator) {
+            userCampaigns[index] = i;
+            index++;
+        }
+    }
+    return userCampaigns;
+}
+
 
 
 }

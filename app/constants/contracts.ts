@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 
-export const CONTRACT_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
+export const CONTRACT_ADDRESS = "0xCfcdE046Fe0F514E1e52CD652DFCaD50034CFfA8";
 
 export const CONTRACT_ABI = [
   {
@@ -212,6 +212,25 @@ export const CONTRACT_ABI = [
         internalType: "uint256",
         name: "",
         type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_creator",
+        type: "address",
+      },
+    ],
+    name: "getCampaignsByCreator",
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "",
+        type: "uint256[]",
       },
     ],
     stateMutability: "view",
