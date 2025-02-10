@@ -1,8 +1,6 @@
 # CrowdHive
 
-A modern crowdfunding platform built with blockchain technology to empower individuals and teams to fund their next big projects. This project leverages Web3 tools to ensure transparency, security, and efficiency for all crowdfunding activities.
-
-## Table of Contents
+A modern crowdfunding platform built with blockchain technology to empower individuals and teams to fund their next big projects.
 
 1. [Features](#features)
 2. [Technologies Used](#technologies-used)
