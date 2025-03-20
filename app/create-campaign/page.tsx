@@ -79,7 +79,7 @@ export default function CreateCampaign() {
               htmlFor="goal"
               className="block text-lg font-medium text-gray-300"
             >
-              Funding Goal ($)
+              Funding Goal (ETH)
             </label>
             <input
               id="goal"
@@ -113,7 +113,7 @@ export default function CreateCampaign() {
               htmlFor="duration"
               className="block text-lg font-medium text-gray-300"
             >
-              Duration (in days)
+              Duration (in hours)
             </label>
             <input
               id="duration"

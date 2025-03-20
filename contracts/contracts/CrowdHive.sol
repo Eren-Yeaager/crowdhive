@@ -2,102 +2,60 @@
 pragma solidity ^0.8.19;
 contract CrowdHive{
     struct Campaign{
-        address creator;
-        string title;
-        string description;
-        uint goal;
-        uint deadline;
+        address creator ;
+        string title ;
+        uint goal ;
         uint amountCollected;
-        bool withdrawn;
     }
-    event ContributionReceived(uint id, address indexed contributor, uint amount);
 
-    mapping(uint=>Campaign)public campaigns;
-    mapping(uint=>mapping(address=>uint)) public contributons;
-    uint public campaignCount;
-    
-    function createCampaign(string memory _title ,string memory _description ,uint _goal ,uint _duration) external{
+    uint public campaignCount ;
+    mapping(uint => Campaign) public campaigns ;
+    mapping(address => uint []) public userCampaigns ;
 
-        require(_goal >0 ,"Goal must be valid");
-        require(_duration >0 ,"Duration must be valid");
-        
-        uint deadline=block.timestamp + _duration ;
-        campaigns[campaignCount]=Campaign({
-            creator : msg.sender,
-            title : _title,
-            description : _description,
+///@notice Create a new campaign
+    function createCampaign(string memory _title , uint _goal) external{
+
+        require(_goal > 0 ,"Goal must be greater than 0") ;
+        campaigns[campaignCount] = Campaign({
+            creator : msg.sender ,
+            title : _title ,
             goal : _goal ,
-            deadline : deadline ,
-            amountCollected : 0 ,
-            withdrawn :false 
+            amountCollected : 0
         });
-        campaignCount++ ; 
+
+        userCampaigns[msg.sender].push(campaignCount) ;
+        campaignCount ++ ;
     }
 
-    function contribute (uint _id ) external payable{
-      Campaign storage campaign= campaigns[_id];
-      require(block.timestamp < campaign.deadline ,"Campaign has eneded");
-      require(msg.value > 0 ,"Contribution must be valid");
-      campaign.amountCollected += msg.value ;
-      contributons[_id][msg.sender]+= msg.value ;
 
-      emit ContributionReceived(_id, msg.sender, msg.value);
+///@notice Get all campaigns created by all users
+function getAllCampaigns() external view returns (Campaign[] memory){
+    Campaign[] memory allCampaigns = new Campaign[](campaignCount) ;
+    for(uint i=0 ;i < campaignCount ; i++){
+        allCampaigns[i]=campaigns[i];
     }
-
-    function withdrawFunds(uint _id) external {
-    Campaign storage campaign = campaigns[_id];
-    require(msg.sender == campaign.creator, "Only creator can withdraw");
-    require(campaign.amountCollected > 0, "No funds available");
-    uint amount = campaign.amountCollected;
-    campaign.amountCollected = 0; 
-    (bool success, ) = payable(campaign.creator).call{value: amount}("");
-    require(success, "Transfer failed");
+    return allCampaigns;
 }
-
-    function getCampaign(uint _id) external view returns (
-        address creator,
-        string memory title,
-        string memory description,
-        uint goal,
-        uint deadline,
-        uint amountCollected,
-        bool withdrawn
-    ) {
-        Campaign storage campaign = campaigns[_id];
-        return (
-            campaign.creator,
-            campaign.title,
-            campaign.description,
-            campaign.goal,
-            campaign.deadline,
-            campaign.amountCollected,
-            campaign.withdrawn
-        );
-    }
-
-    
-    function getCampaignCount() external view returns (uint) {
-        return campaignCount;
-    }
-   function getCampaignsByCreator(address _creator) external view returns (uint[] memory) {
-    uint count = 0;
-    for (uint i = 0; i < campaignCount; i++) {
-        if (campaigns[i].creator == _creator) {
-            count++;
-        }
-    }
-
-    uint[] memory userCampaigns = new uint[](count);
-    uint index = 0;
-    for (uint i = 0; i < campaignCount; i++) {
-        if (campaigns[i].creator == _creator) {
-            userCampaigns[index] = i;
-            index++;
-        }
-    }
-    return userCampaigns;
+///@notice Get campaigns created by current user 
+function getMyCampaigns() external view returns (uint[] memory) {
+    return userCampaigns[msg.sender] ;
 }
+///@notice Contribute to a campaign
+function contribute(uint _id) external payable {
+    require(msg.value > 0 , "Must send some ETH");
+    require(_id < campaignCount ,"Campaign doesn't exist");
+    campaigns[_id].amountCollected += msg.value ;
 
+}
+///@notice Withdraw funds (only campaign owner can withdraw)
+function withdrawFunds(uint _id) external {
+    Campaign storage campaign = campaigns[_id] ;
+    require(msg.sender == campaign.creator ,"Only owner can withdraw");
+    require(campaign.amountCollected > 0 ,"No funds to withdraw");
 
-
+    uint amount =campaign.amountCollected;
+    campaign.amountCollected = 0 ;
+    (bool success,) = payable(msg.sender).call{value:amount}(""); 
+    require(success ,"Withdrawal Failed");
+}
 }
