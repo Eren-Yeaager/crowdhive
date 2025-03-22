@@ -19,7 +19,6 @@ A modern crowdfunding platform built with blockchain technology to empower indiv
 - **Responsive Design**: Fully responsive for desktops, tablets, and mobile devices.
 - **Dark Mode**: User-friendly dark mode with smooth transitions.
 - **Secure Transactions**: Wallet integration and smart contracts for seamless and secure payments.
-- **Next.js 13 App Directory**: Latest features for better performance and routing.
 
 ---
 
