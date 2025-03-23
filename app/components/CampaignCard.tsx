@@ -22,6 +22,7 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
   const { writeContract } = useWriteContract();
   const [amount, setAmount] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   const isCreator =
     userAddress?.toLowerCase() === campaign.creator.toLowerCase();
@@ -51,6 +52,30 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
       alert("Error contributing: " + (error as any).message);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // 🔹 Handle Withdraw Funds
+  const handleWithdraw = async () => {
+    if (campaign.amountCollected === BigInt(0)) {
+      alert("No funds available to withdraw.");
+      return;
+    }
+
+    setIsWithdrawing(true);
+    try {
+      await writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: "withdrawFunds",
+        args: [BigInt(campaign.id)],
+        gas: BigInt(300000),
+      });
+      alert("Withdrawal successful! 🎉 Funds sent to your wallet.");
+    } catch (error) {
+      alert("Error withdrawing: " + (error as any).message);
+    } finally {
+      setIsWithdrawing(false);
     }
   };
 
@@ -89,6 +114,17 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
             {isProcessing ? "Processing..." : "Contribute"}
           </button>
         </div>
+      )}
+
+      {/* 🔹 Withdraw Funds (Visible to Creator) */}
+      {isCreator && (
+        <button
+          className="mt-4 w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 disabled:bg-gray-500"
+          onClick={handleWithdraw}
+          disabled={isWithdrawing || campaign.amountCollected === BigInt(0)}
+        >
+          {isWithdrawing ? "Withdrawing..." : "Withdraw Funds"}
+        </button>
       )}
     </div>
   );
