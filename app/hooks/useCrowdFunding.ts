@@ -1,187 +1,179 @@
-// import { useState, useEffect, useCallback } from "react";
-// import { ethers, Contract, Signer, BrowserProvider } from "ethers";
-// import {
-//   CONTRACT_ADDRESS,
-//   CONTRACT_ABI,
-//   getContract,
-// } from "../constants/contracts";
+import { useState, useEffect, useCallback } from "react";
+import { ethers, Contract, Signer, BrowserProvider, parseEther } from "ethers";
+import {
+  CONTRACT_ADDRESS,
+  CONTRACT_ABI,
+  getContract,
+} from "../constants/contracts";
 
-// interface Campaign {
-//   id: number;
-//   title: string;
-//   description: string;
-//   goal: string;
-//   amountCollected: string;
-//   creator: string;
-//   deadline: number;
-// }
+import { formatUnits } from "viem";
+interface Campaign {
+  id: number;
+  title: string;
+  goal: bigint;
+  amountCollected: bigint;
+  creator: string;
+}
 
-// interface UseCrowdfundingResult {
-//   account: string | null;
-//   campaigns: Campaign[];
-//   campaignCount: number;
-//   createCampaign: (
-//     title: string,
-//     description: string,
-//     goal: string,
-//     duration: string
-//   ) => void;
-//   contribute: (id: number, amount: string) => void;
-//   withdrawFunds: (id: number) => void;
-// }
+interface UseCrowdfundingResult {
+  account: string | null;
+  campaigns: Campaign[];
+  campaignCount: number;
+  createCampaign: (title: string, goal: string) => void;
+  contribute: (id: number, amount: string) => Promise<void>;
+  withdrawFunds: (id: number) => Promise<void>;
+  isProcessing: boolean;
+  isWithdrawing: boolean;
+  error: string | null;
+}
 
-// const useCrowdfunding = (): UseCrowdfundingResult => {
-//   const [provider, setProvider] = useState<BrowserProvider | null>(null);
-//   const [contract, setContract] = useState<Contract | null>(null);
-//   const [account, setAccount] = useState<string | null>(null);
-//   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-//   const [campaignCount, setCampaignCount] = useState<number>(0);
+const useCrowdfunding = (): UseCrowdfundingResult => {
+  const [provider, setProvider] = useState<BrowserProvider | null>(null);
+  const [contract, setContract] = useState<Contract | null>(null);
+  const [account, setAccount] = useState<string | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignCount, setCampaignCount] = useState<number>(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-//   useEffect(() => {
-//     const connectWallet = async () => {
-//       if (window.ethereum) {
-//         try {
-//           const web3Provider = new ethers.BrowserProvider(window.ethereum);
-//           setProvider(web3Provider);
+  // Connect wallet & initialize contract
+  useEffect(() => {
+    const connectWallet = async () => {
+      if (window.ethereum) {
+        try {
+          const web3Provider = new ethers.BrowserProvider(window.ethereum);
+          setProvider(web3Provider);
 
-//           const accounts = await web3Provider.send("eth_requestAccounts", []);
-//           const signer = await web3Provider.getSigner();
-//           setAccount(accounts[0]);
+          const accounts = await web3Provider.send("eth_requestAccounts", []);
+          const signer = await web3Provider.getSigner();
+          setAccount(accounts[0]);
 
-//           const contractInstance = getContract(signer);
-//           setContract(contractInstance);
-//         } catch (error) {
-//           console.error("Error connecting to Ethereum:", error);
-//         }
-//       } else {
-//         console.error("Ethereum provider not available. Use MetaMask.");
-//       }
-//     };
+          const contractInstance = getContract(signer);
+          setContract(contractInstance);
+        } catch (err) {
+          setError("Error connecting to Ethereum: " + (err as any).message);
+        }
+      } else {
+        setError("Ethereum provider not available. Use MetaMask.");
+      }
+    };
 
-//     connectWallet();
-//   }, []);
+    connectWallet();
+  }, []);
 
-//   const fetchCampaigns = useCallback(async () => {
-//     if (!contract) return;
+  // Fetch campaigns from contract
+  const fetchCampaigns = useCallback(async () => {
+    if (!contract) return;
 
-//     try {
-//       const count = await contract.getCampaignCount();
-//       setCampaignCount(Number(count));
+    try {
+      setError(null);
 
-//       const campaignList: Campaign[] = [];
-//       for (let i = 0; i < count; i++) {
-//         const campaign = await contract.getCampaign(BigInt(i));
-//         campaignList.push({
-//           id: i,
-//           title: campaign[1], // title
-//           description: campaign[2], // description
-//           goal: ethers.formatEther(campaign[3]), // goal (BigNumber)
-//           amountCollected: ethers.formatEther(campaign[5]), // amount collected (BigNumber)
-//           creator: campaign[0], // creator address
-//           deadline: Number(campaign[4]) * 1000, // Convert to milliseconds
-//         });
-//       }
-//       setCampaigns(campaignList);
-//     } catch (error) {
-//       console.error("Error fetching campaigns:", error);
-//     }
-//   }, [contract]);
+      // ✅ Fetch campaign count
+      const count = await contract.campaignCount();
+      setCampaignCount(Number(count));
 
-//   useEffect(() => {
-//     fetchCampaigns();
-//   }, [contract]);
+      // ✅ Fetch all campaigns in a single call
+      const campaignsData = await contract.getAllCampaigns();
 
-//   const createCampaign = useCallback(
-//     async (
-//       title: string,
-//       description: string,
-//       goal: string,
-//       duration: string
-//     ) => {
-//       if (!contract) return;
-//       try {
-//         const tx = await contract.createCampaign(
-//           title,
-//           description,
-//           ethers.parseEther(goal),
-//           parseInt(duration)
-//         );
-//         await tx.wait();
-//         console.log("Campaign created successfully!");
-//         fetchCampaigns();
-//       } catch (error) {
-//         console.error("Error creating campaign:", error);
-//       }
-//     },
-//     [contract, fetchCampaigns]
-//   );
+      const campaignList: Campaign[] = campaignsData.map(
+        (campaign: any, index: number) => ({
+          id: index,
+          title: campaign.title,
+          goal: BigInt(campaign.goal),
+          amountCollected: BigInt(campaign.amountCollected),
+          creator: campaign.creator,
+        })
+      );
 
-//   const contribute = useCallback(
-//     async (id: number, amount: string) => {
-//       if (!contract) return;
-//       try {
-//         const tx = await contract.contribute(BigInt(id), {
-//           value: ethers.parseEther(amount),
-//         });
-//         await tx.wait();
-//         console.log(`Contributed ${amount} ETH to campaign ${id}`);
-//         fetchCampaigns();
-//       } catch (error) {
-//         console.error("Error contributing:", error);
-//       }
-//     },
-//     [contract, fetchCampaigns]
-//   );
+      setCampaigns(campaignList);
+    } catch (err) {
+      setError("Error fetching campaigns: " + (err as any).message);
+    }
+  }, [contract]);
 
-//   const withdrawFunds = useCallback(
-//     async (id: number) => {
-//       if (!contract || !account) return;
+  useEffect(() => {
+    fetchCampaigns();
+  }, [contract]);
 
-//       try {
-//         const campaign = await contract.getCampaign(BigInt(id));
-//         const creator = campaign[0];
+  // Create campaign
+  const createCampaign = useCallback(
+    async (title: string, goal: string) => {
+      if (!contract) return;
 
-//         if (creator.toLowerCase() !== account.toLowerCase()) {
-//           console.error("Only the campaign creator can withdraw funds.");
-//           return;
-//         }
+      try {
+        setError(null);
+        setIsProcessing(true);
 
-//         const tx = await contract.withdrawFunds(BigInt(id));
-//         await tx.wait();
-//         console.log("Funds withdrawn successfully!");
-//         fetchCampaigns();
-//       } catch (error) {
-//         console.error("Error withdrawing funds:", error);
-//       }
-//     },
-//     [contract, account, fetchCampaigns]
-//   );
+        const tx = await contract.createCampaign(
+          title,
+          ethers.parseEther(goal)
+        );
+        await tx.wait();
 
-//   return {
-//     account,
-//     campaigns,
-//     campaignCount,
-//     createCampaign,
-//     contribute,
-//     withdrawFunds,
-//   };
-// };
+        fetchCampaigns();
+      } catch (err) {
+        setError("Error creating campaign: " + (err as any).message);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [contract, fetchCampaigns]
+  );
 
-// export default useCrowdfunding;
+  // Contribute to campaign
+  const contribute = useCallback(
+    async (id: number, amount: string) => {
+      if (!contract) return;
 
-import { useReadContract } from "wagmi";
-import { CONTRACT_ABI, CONTRACT_ADDRESS } from "../constants/contracts";
+      try {
+        setIsProcessing(true);
+        const tx = await contract.contribute(BigInt(id), {
+          value: ethers.parseEther(amount),
+        });
+        await tx.wait();
 
-export const useFetchCampaigns = () => {
-  const {
-    data: campaigns,
-    isLoading,
+        fetchCampaigns();
+      } catch (err) {
+        setError("Error contributing: " + (err as any).message);
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [contract, fetchCampaigns]
+  );
+
+  // Withdraw funds
+  const withdrawFunds = useCallback(
+    async (id: number) => {
+      if (!contract || !account) return;
+
+      try {
+        setIsWithdrawing(true);
+        const tx = await contract.withdrawFunds(BigInt(id));
+        await tx.wait();
+
+        fetchCampaigns();
+      } catch (err) {
+        setError("Error withdrawing funds: " + (err as any).message);
+      } finally {
+        setIsWithdrawing(false);
+      }
+    },
+    [contract, account, fetchCampaigns]
+  );
+
+  return {
+    account,
+    campaigns,
+    campaignCount,
+    createCampaign,
+    contribute,
+    withdrawFunds,
+    isProcessing,
+    isWithdrawing,
     error,
-  } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
-    functionName: "getAllCampaigns",
-  });
-
-  return { campaigns, isLoading, error };
+  };
 };
+
+export default useCrowdfunding;

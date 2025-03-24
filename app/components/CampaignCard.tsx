@@ -1,10 +1,10 @@
 "use client";
 
-import { useWriteContract, useAccount } from "wagmi";
-import { CONTRACT_ABI, CONTRACT_ADDRESS } from "../constants/contracts";
-import { formatEther, parseEther } from "viem";
+import { useAccount } from "wagmi";
+import { formatEther } from "viem";
 import { useState } from "react";
-
+import useCrowdfunding from "../hooks/useCrowdFunding";
+import { formatUnits } from "viem";
 interface Campaign {
   id: number;
   creator: string;
@@ -18,66 +18,13 @@ interface CampaignCardProps {
 }
 
 const CampaignCard = ({ campaign }: CampaignCardProps) => {
-  const { address: userAddress } = useAccount();
-  const { writeContract } = useWriteContract();
+  const { account, contribute, withdrawFunds, isProcessing, isWithdrawing } =
+    useCrowdfunding();
   const [amount, setAmount] = useState<string>("");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  const isCreator =
-    userAddress?.toLowerCase() === campaign.creator.toLowerCase();
-  const goalEth = formatEther(campaign.goal);
-  const amountCollectedEth = formatEther(campaign.amountCollected);
-
-  // 🔹 Handle Contribution
-  const handleContribution = async () => {
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      alert("Please enter a valid amount.");
-      return;
-    }
-    setIsProcessing(true);
-
-    try {
-      await writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: "contribute",
-        args: [BigInt(campaign.id)],
-        value: parseEther(amount),
-        gas: BigInt(250000),
-      });
-      alert("Contribution successful! 🎉");
-      setAmount("");
-    } catch (error) {
-      alert("Error contributing: " + (error as any).message);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // 🔹 Handle Withdraw Funds
-  const handleWithdraw = async () => {
-    if (campaign.amountCollected === BigInt(0)) {
-      alert("No funds available to withdraw.");
-      return;
-    }
-
-    setIsWithdrawing(true);
-    try {
-      await writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: CONTRACT_ABI,
-        functionName: "withdrawFunds",
-        args: [BigInt(campaign.id)],
-        gas: BigInt(300000),
-      });
-      alert("Withdrawal successful! 🎉 Funds sent to your wallet.");
-    } catch (error) {
-      alert("Error withdrawing: " + (error as any).message);
-    } finally {
-      setIsWithdrawing(false);
-    }
-  };
+  const isCreator = account?.toLowerCase() === campaign.creator.toLowerCase();
+  const goalEth = formatUnits(campaign.goal, 18);
+  const amountCollectedEth = formatUnits(campaign.amountCollected, 18);
 
   return (
     <div className="p-6 shadow-md rounded-lg border border-gray-700 bg-gray-900">
@@ -95,7 +42,6 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
         <span className="text-blue-400">{amountCollectedEth} ETH</span>
       </p>
 
-      {/* 🔹 Contribution Input & Button */}
       {!isCreator && (
         <div className="mt-4">
           <input
@@ -108,7 +54,7 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
           />
           <button
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-500 disabled:bg-gray-500"
-            onClick={handleContribution}
+            onClick={() => contribute(campaign.id, amount)}
             disabled={isProcessing}
           >
             {isProcessing ? "Processing..." : "Contribute"}
@@ -116,11 +62,10 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
         </div>
       )}
 
-      {/* 🔹 Withdraw Funds (Visible to Creator) */}
       {isCreator && (
         <button
           className="mt-4 w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 disabled:bg-gray-500"
-          onClick={handleWithdraw}
+          onClick={() => withdrawFunds(campaign.id)}
           disabled={isWithdrawing || campaign.amountCollected === BigInt(0)}
         >
           {isWithdrawing ? "Withdrawing..." : "Withdraw Funds"}
